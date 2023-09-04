@@ -1,11 +1,15 @@
 from django.shortcuts import render
+from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework import status
-from rest_framework.viewsets import ModelViewSet
-from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated, IsAdminUser
+from rest_framework.viewsets import ModelViewSet, GenericViewSet
+from rest_framework.mixins import CreateModelMixin, RetrieveModelMixin, UpdateModelMixin
+from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from .permissons import IsAdminOrReadOnly
-from .serializers import CategorySerializer, BookSerializer, CreateBookSerializer
-from .models import Book, Category, Order
+from .serializers import CategorySerializer, BookSerializer, CreateBookSerializer, CustomerSerializer
+from .models import Book, Category, Customer, Order
+
+
 # Create your views here.
 
 
@@ -37,3 +41,21 @@ class BookViewSet(ModelViewSet):
         if self.request.method in ['POST', 'PUT', 'PATCH']:
             return CreateBookSerializer
         return BookSerializer
+
+
+class CustomerViewSet(CreateModelMixin, RetrieveModelMixin, UpdateModelMixin, GenericViewSet):
+    queryset = Customer.objects.all()
+    serializer_class = CustomerSerializer
+    permission_classes = [IsAuthenticated]
+
+    @action(detail=False, methods=['GET', 'PUT'])
+    def me(self, request):
+        customer = Customer.objects.get(user_id=request.user.id)
+        if request.method == 'GET':
+            serializer = CustomerSerializer(customer)
+            return Response(serializer.data)
+        elif request.method == 'PUT':
+            serializer = CustomerSerializer(customer, data=request.data)
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+            return Response(serializer.data)
