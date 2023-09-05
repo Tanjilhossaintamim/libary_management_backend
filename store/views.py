@@ -6,7 +6,7 @@ from rest_framework.viewsets import ModelViewSet, GenericViewSet
 from rest_framework.mixins import CreateModelMixin, RetrieveModelMixin, UpdateModelMixin
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from .permissons import IsAdminOrReadOnly
-from .serializers import CategorySerializer, BookSerializer, CreateBookSerializer, CustomerSerializer
+from .serializers import CategorySerializer, BookSerializer, CreateBookSerializer, CustomerSerializer, OrderSerializer, CreateOrderSerializer, UpdateOrderSerializer
 from .models import Book, Category, Customer, Order
 
 
@@ -59,3 +59,32 @@ class CustomerViewSet(CreateModelMixin, RetrieveModelMixin, UpdateModelMixin, Ge
             serializer.is_valid(raise_exception=True)
             serializer.save()
             return Response(serializer.data)
+
+
+class OrderViewSet(ModelViewSet):
+    http_method_names = ['get', 'post', 'patch', 'head', 'options']
+    queryset = Order.objects.select_related(
+        'customer').all().select_related('book')
+    permission_classes = [IsAuthenticated]
+
+    def create(self, request, *args, **kwargs):
+        serializer = CreateOrderSerializer(data=request.data, context={
+                                           'user_id': self.request.user.id})
+        serializer.is_valid(raise_exception=True)
+        order = serializer.save()
+        serializer = OrderSerializer(order)
+        return Response(serializer.data)
+
+    def get_queryset(self):
+        customer = Customer.objects.get(user_id=self.request.user.id)
+        return Order.objects.filter(customer=customer)
+
+    def get_serializer_class(self):
+        if self.request.method == 'POST':
+            return CreateOrderSerializer
+        elif self.request.method == 'PATCH':
+            return UpdateOrderSerializer
+        return OrderSerializer
+
+    # def get_serializer_context(self):
+    #     return {'user_id': self.request.user.id}
