@@ -16,9 +16,15 @@ from .filters import CustomFilter
 
 
 class CategoryViewSet(ModelViewSet):
+    http_method_names = ['get', 'post', 'patch', 'put', 'delete']
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
-    permission_classes = [IsAdminOrReadOnly]
+
+    def get_permissions(self):
+        if self.request.method in ['POST', 'PUT', 'PATCH', 'DELETE']:
+            return [IsAdminUser()]
+
+        return [IsAuthenticated()]
 
     def destroy(self, request, *args, **kwargs):
         if Book.objects.filter(category_id=self.kwargs['pk']).count() > 0:
