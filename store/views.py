@@ -1,13 +1,15 @@
-from django.shortcuts import render
+from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.viewsets import ModelViewSet, GenericViewSet
 from rest_framework.mixins import CreateModelMixin, RetrieveModelMixin, UpdateModelMixin
-from rest_framework.permissions import IsAuthenticated, IsAdminUser
+from rest_framework.permissions import IsAuthenticated, IsAdminUser, AllowAny
+from rest_framework.filters import SearchFilter
 from .permissons import IsAdminOrReadOnly
 from .serializers import CategorySerializer, BookSerializer, CreateBookSerializer, CustomerSerializer, OrderSerializer, CreateOrderSerializer, UpdateOrderSerializer
 from .models import Book, Category, Customer, Order
+from .filters import CustomFilter
 
 
 # Create your views here.
@@ -26,6 +28,9 @@ class CategoryViewSet(ModelViewSet):
 
 class BookViewSet(ModelViewSet):
     queryset = Book.objects.select_related('category').all()
+    filter_backends = [DjangoFilterBackend, SearchFilter]
+    filterset_class = CustomFilter
+    search_fields = ['name']
 
     def get_permissions(self):
         if self.request.method == 'GET':
@@ -43,10 +48,14 @@ class BookViewSet(ModelViewSet):
         return BookSerializer
 
 
-class CustomerViewSet(CreateModelMixin, RetrieveModelMixin, UpdateModelMixin, GenericViewSet):
+class CustomerViewSet(ModelViewSet):
     queryset = Customer.objects.all()
     serializer_class = CustomerSerializer
-    permission_classes = [IsAuthenticated]
+
+    def get_permissions(self):
+        if self.request.method == 'GET':
+            return [IsAuthenticated()]
+        return [AllowAny()]
 
     @action(detail=False, methods=['GET', 'PUT'])
     def me(self, request):

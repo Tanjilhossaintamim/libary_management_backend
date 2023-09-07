@@ -4,7 +4,7 @@ from store.views import CategoryViewSet, BookViewSet, CustomerViewSet, OrderView
 router = DefaultRouter()
 router.register('categories', CategoryViewSet)
 router.register('books', BookViewSet)
-router.register('customers', CustomerViewSet)
+router.register('customers', CustomerViewSet, basename='customer')
 router.register('orders', OrderViewSet)
 
 urlpatterns = router.urls

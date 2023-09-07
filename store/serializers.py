@@ -13,7 +13,7 @@ class BookSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Book
-        fields = ['id', 'name', 'category']
+        fields = ['id', 'name', 'category', 'image']
 
 
 class CreateBookSerializer(serializers.ModelSerializer):
@@ -66,7 +66,7 @@ class CreateOrderSerializer(serializers.Serializer):
             order.save()
         except Order.DoesNotExist:
             # create new order
-            Order.objects.create(
+            order = Order.objects.create(
                 customer=customer, book=book, quantity=1)
         return order
 

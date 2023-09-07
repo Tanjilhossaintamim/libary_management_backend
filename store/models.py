@@ -17,6 +17,7 @@ class Category(models.Model):
 class Book(models.Model):
     name = models.CharField(max_length=50)
     category = models.ForeignKey(Category, on_delete=models.PROTECT)
+    image = models.ImageField(upload_to='bookimage', null=True)
 
     def __str__(self):
         return self.name
@@ -30,8 +31,8 @@ class Customer(models.Model):
     address = models.TextField(null=True, blank=True)
     college = models.CharField(max_length=255, null=True, blank=True)
 
-    def __str__(self):
-        return self.name
+    # def __str__(self):
+    #     return self.user.email
 
 
 class Order(models.Model):
